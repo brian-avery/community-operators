@@ -1,0 +1,583 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+    name: maistra.v0.10.0
+    namespace: placeholder
+    annotations:
+      categories: Monitoring, Logging & Tracing, Security, Networking
+      capabilities: "Seamless Upgrades"
+      certified: "false"
+      description: "The Maistra Istio Operator provides a means for configuring and managing an Istio Service Mesh."
+      containerImage: quay.io/maistra/istio-operator-centos7:0.10.0
+      createdAt: 2019-02-20T08:00:00Z'
+      repository: "https://github.com/Maistra/istio-operator"
+      support: Red Hat
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "istio.openshift.com/v1alpha3",
+            "kind": "ControlPlane",
+            "metadata": {
+              "name": "basic-install"
+            },
+            "spec": {
+              "istio": {
+                "global": {
+                  "proxy": {
+                    "resources": {
+                      "requests": {
+                        "cpu": "100m",
+                        "memory": "128Mi"
+                      },
+                      "limits": {
+                        "cpu": "500m",
+                        "memory": "128Mi"
+                      }
+                    }
+                  }
+                },
+                "gateways": {
+                  "istio-egressgateway": {
+                    "autoscaleEnabled": "false"
+                  },
+                  "istio-ingressgateway": {
+                    "autoscaleEnabled": "false",
+                    "ior_enabled": "false"
+                  }
+                },
+                "mixer": {
+                  "policy": {
+                    "autoscaleEnabled": "false"
+                  },
+                  "telemetry": {
+                    "autoscaleEnabled": "false",
+                    "resources": {
+                      "requests": {
+                        "cpu": "100m",
+                        "memory": "1G"
+                      },
+                      "limits": {
+                        "cpu": "500m",
+                        "memory": "4G"
+                      }
+                    }
+                  }
+                },
+                "pilot": {
+                  "autoscaleEnabled": "false",
+                  "traceSampling": "100.0"
+                },
+                "kiali": {
+                  "dashboard": {
+                    "user": "admin",
+                    "passphrase": "admin"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "apiVersion": "istio.openshift.com/v1alpha1",
+            "kind": "Installation",
+            "metadata":{
+                "name": "istio-installation",
+                "namespace": "istio-operator"
+            }
+          }
+        ]
+spec:
+  version: 0.10.0
+  maturity: alpha
+  displayName: Maistra Istio Operator
+  description: |-
+    The Maistra Istio Operator for OKD provides a means for configuring and managing an Istio Service Mesh.
+  keywords: [ 'istio', 'maistra', 'servicemesh' ]
+  maintainers:
+  - name: Red Hat, Service Mesh
+    email: istio-feedback@redhat.com
+  provider:
+    name: Red Hat, Inc.
+  links:
+  - name: Maistra Documentation
+    url: https://www.maistra.io
+  - name: Installation Configuration
+    url: https://maistra.io/docs/getting_started/custom-install/
+  - name: Operator Source Code
+    url: https://github.com/Maistra/istio-operator
+  - name: Upstream Istio Documentation
+    url: https://istio.io/
+  installModes:
+  - type: OwnNamespace
+    supported: true
+  - type: SingleNamespace
+    supported: true
+  - type: MultiNamespace
+    supported: false
+  - type: AllNamespaces
+    supported: true
+  icon:
+  - base64data: PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CjxjaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iMTQ2IiBzdHJva2Utd2lkdGg9IjIiIC8+Cjxwb2x5Z29uIHBvaW50cz0iNjUsMjQwIDIyNSwyNDAgMTI1LDI3MCIvPgo8cG9seWdvbiBwb2ludHM9IjY1LDIzMCAxMjUsMjIwIDEyNSwxMTAiLz4KPHBvbHlnb24gcG9pbnRzPSIxMzUsMjIwIDIyNSwyMzAgMTM1LDMwIi8+Cjwvc3ZnPgo=
+    mediatype: image/svg+xml
+  install:
+    strategy: deployment
+    spec:
+      clusterPermissions:
+      - serviceAccountName: istio-operator
+        rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - serviceaccounts
+          - namespaces
+          - routes
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - '*'
+        - apiGroups:
+          - extensions
+          resources:
+          - daemonsets
+          - deployments
+          verbs:
+          - '*'
+        - apiGroups:
+          - policy
+          resources:
+          - poddisruptionbudgets
+          verbs:
+          - '*'
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - mutatingwebhookconfigurations
+          - validatingwebhookconfigurations
+          verbs:
+          - '*'
+        - apiGroups:
+          - certmanager.k8s.io
+          resources:
+          - clusterissuers
+          verbs:
+          - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          - clusterroles
+          - roles
+          - rolebindings
+          verbs:
+          - '*'
+        - apiGroups:
+          - authentication.istio.io
+          resources:
+          # for galley, *: get, list, watch
+          # for mixer, *: create, get, list, watch
+          # for pilot, *: *
+          # for istio-authenticated, *: *
+          - '*'
+          - meshpolicies
+          verbs:
+          - '*'
+        - apiGroups:
+          - config.istio.io
+          resources:
+          # for galley, *: get, list, watch
+          # for pilot, *: *
+          # for istio-authenticated, *: *
+          - '*'
+          - attributemanifests
+          - handlers
+          - logentries
+          - rules
+          - metrics
+          - kuberneteses
+          verbs:
+          - '*'
+        - apiGroups:
+          - networking.istio.io
+          resources:
+          # for galley, *: get, list, watch
+          # for pilot, *: *
+          # for istio-authenticated, *: *
+          - '*'
+          - gateways
+          - destinationrules
+          - virtualservices
+          - envoyfilters
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - istio.openshift.com
+          resources:
+          - '*'
+          - istiocontrolplanes
+          - installations
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps.openshift.io
+          resources:
+          - deploymentconfigs
+          verbs:
+          - '*'
+        - apiGroups:
+          - oauth.openshift.io
+          resources:
+          - oauthclients
+          verbs:
+          - '*'
+        - apiGroups:
+          - project.openshift.io
+          resources:
+          - projects
+          - projectrequests
+          verbs:
+          - '*'
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - '*'
+        - apiGroups:
+          - security.openshift.io
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - '*'
+        # for galley (pilot and prometheus also watch nodes)
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - extensions
+          resources:
+          - ingresses
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - extensions
+          - apps
+          resources:
+          - deployments/finalizers
+          resourceNames:
+          - istio-galley
+          - istio-sidecar-injector
+          verbs:
+          - update
+        # for mixer
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - extensions
+          resources:
+          - replicasets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - replicationcontrollers
+          verbs:
+          - get
+          - list
+          - watch
+        # for pilot
+        # for istio-authenticated, *: *
+        - apiGroups:
+          - rbac.istio.io
+          resources:
+          - '*'
+          verbs:
+          - '*'
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - '*'
+        - apiGroups:
+          - extensions
+          resources:
+          - ingresses
+          - ingresses/status
+          verbs:
+          - '*'
+        # prometheus
+        - apiGroups:
+          - ""
+          resources:
+          - nodes/proxy
+          verbs:
+          - get
+          - list
+          - watch
+        - nonResourceURLs:
+          - "/metrics"
+          verbs:
+          - get
+        # citadel
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        # kiali
+        - apiGroups: [""]
+          resources:
+          - configmaps
+          - endpoints
+          - namespaces
+          - nodes
+          - pods
+          - services
+          - replicationcontrollers
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups: ["extensions", "apps"]
+          resources:
+          - deployments
+          - statefulsets
+          - replicasets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups: ["autoscaling"]
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups: ["batch"]
+          resources:
+          - cronjobs
+          - jobs
+          verbs:
+          - '*'
+        - apiGroups: ["project.openshift.io"]
+          resources:
+          - projects
+          verbs:
+          - get
+        - apiGroups: ["route.openshift.io"]
+          resources:
+          - routes
+          verbs:
+          - get
+        - apiGroups: ["apps.openshift.io"]
+          resources:
+          - deploymentconfigs
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups: ["config.istio.io"]
+          resources:
+          - apikeys
+          - authorizations
+          - checknothings
+          - circonuses
+          - deniers
+          - fluentds
+          - handlers
+          - kubernetesenvs
+          - kuberneteses
+          - listcheckers
+          - listentries
+          - logentries
+          - memquotas
+          - metrics
+          - opas
+          - prometheuses
+          - quotas
+          - quotaspecbindings
+          - quotaspecs
+          - rbacs
+          - reportnothings
+          - rules
+          - solarwindses
+          - stackdrivers
+          - statsds
+          - stdios
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["networking.istio.io"]
+          resources:
+          - destinationrules
+          - gateways
+          - serviceentries
+          - virtualservices
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["authentication.istio.io"]
+          resources:
+          - policies
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - watch
+        - apiGroups: ["monitoring.kiali.io"]
+          resources:
+          - monitoringdashboards
+          verbs:
+          - get
+
+      deployments:
+      - name: istio-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: istio-operator
+          template:
+            metadata:
+              labels:
+                name: istio-operator
+            spec:
+              serviceAccountName: istio-operator
+              containers:
+                - name: istio-operator
+                  image: maistra/istio-operator-centos7:0.10.0
+                  ports:
+                  - containerPort: 60000
+                    name: metrics
+                  command:
+                  - istio-operator
+                  imagePullPolicy: Always
+                  readinessProbe:
+                    exec:
+                      command:
+                        - stat
+                        - /tmp/operator-sdk-ready
+                    initialDelaySeconds: 4
+                    periodSeconds: 10
+                    failureThreshold: 1
+                  env:
+                    - name: WATCH_NAMESPACE
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.annotations['olm.targetNamespaces']
+                    - name: POD_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.name
+                    - name: OPERATOR_NAME
+                      value: "istio-operator"
+
+  customresourcedefinitions:
+    owned:
+    - name: controlplanes.istio.openshift.com
+      version: v1alpha3
+      kind: ControlPlane
+      displayName: Istio Control Plane
+      description: An Istio control plane installation
+      resources:
+      - kind: Deployment
+        version: v1
+      - kind: StatefulSet
+        version: v1
+      - kind: ReplicaSet
+        version: v1
+      - kind: Pod
+        version: v1
+      - kind: ConfigMap
+        version: v1
+      - kind: Service
+        version: v1
+      - kind: Route
+        version: v1
+      specDescriptors:
+      - description: Set to true to install the Kiali component
+        displayName: Install Kiali
+        path: istio.kiali.enabled
+        x-descriptors:
+          - 'urn:alm:descriptor:com.tectonic.ui:booleanSwitch'
+      - description: Set to true to install the Istio 3Scale adapter
+        displayName: Install 3Scale Adapter
+        path: threeScale.enabled
+        x-descriptors:
+          - 'urn:alm:descriptor:com.tectonic.ui:booleanSwitch'
+      - description: Set to true to install the Red Hat Developer Application Launcher component
+        displayName: Install Red Hat Developer Application Launcher
+        path: launcher.enabled
+        x-descriptors:
+          - 'urn:alm:descriptor:com.tectonic.ui:booleanSwitch'
+      - description: Limits describes the minimum/maximum amount of compute resources required/allowed
+        displayName: Default Resource Requirements
+        path: istio.defaultResources
+        x-descriptors:
+          - 'urn:alm:descriptor:com.tectonic.ui:resourceRequirements'
+    - name: installations.istio.openshift.com
+      version: v1alpha1
+      kind: Installation
+      displayName: Istio Ansible Installation
+      description: Installs an Istio control plane using an Ansible installer
+      resources:
+      - kind: Job
+        version: v1
